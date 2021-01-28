@@ -1,0 +1,77 @@
+version: "3.7"
+
+services:
+  router:
+    image: traefik:2.4
+    ports:
+      - "80:80"
+      - "443:443"
+    command:
+      - "--log.level=WARN"
+      - "--entrypoints.http.address=:80"
+      - "--entrypoints.https.address=:443"
+
+      #- "--certificatesresolvers.le.acme.caserver=https://acme-v02.api.letsencrypt.org/directory" # prod
+      - "--certificatesresolvers.le.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory" # stage
+      - "--certificatesResolvers.le.acme.dnsChallenge.delayBeforeCheck=0"
+      - "--certificatesResolvers.le.acme.dnsChallenge.provider=hetzner"
+      - "--certificatesResolvers.le.acme.dnsChallenge=true"
+      - "--certificatesResolvers.le.acme.email=tlsadmin@qompa.com"
+      - "--certificatesResolvers.le.acme.storage=/certs/acme.json"
+
+      - "--global.checknewversion=false"
+      - "--global.sendanonymoususage=false"
+      - "--api=true"
+      - "--api.dashboard=true"
+      
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=traefik"
+      - "--providers.docker.swarmmode=true"
+      - "--providers.docker.watch=true"
+      - "--providers.docker=true"
+    deploy:
+      labels:
+        - "traefik.enable=true"
+
+        # global http to https
+        - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+        - "traefik.http.routers.redirs.entrypoints=http"
+        - "traefik.http.routers.redirs.middlewares=redirect-to-https"
+        - "traefik.http.routers.redirs.rule=hostregexp(`{host:.+}`)"
+
+        - "traefik.http.routers.traefik.rule=Host(`traefik.office.qompa.com`)"
+        - "traefik.http.routers.traefik.service=api@internal"
+        - "traefik.http.routers.traefik.tls=true"
+        - "traefik.http.routers.traefik.tls.certresolver=le"
+        - "traefik.http.routers.traefik.tls.domains[0].main=office.qompa.com"
+        - "traefik.http.routers.traefik.tls.domains[0].sans=*.office.qompa.com"
+        - "traefik.http.routers.traefik.entrypoints=https"
+        - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+
+      placement:
+        constraints:
+          - node.role == manager
+          - node.hostname == qoffee
+      restart_policy:
+        condition: on-failure
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "30"
+    volumes:
+      # docker socket for docker container autodiscovery
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      # persistent certificate store
+      - /mnt/ssd/docker/volumestraefik/certs:/certs
+    networks:
+      - traefik
+    environment:
+      # for correct log output
+      TZ: Europe/Berlin
+      HETZNER_API_KEY: e0ZqfonoDMIFJHjaE5itjidKsbgNIcLy
+
+networks:
+  traefik:
+    external: true

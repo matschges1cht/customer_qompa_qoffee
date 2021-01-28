@@ -1,0 +1,76 @@
+version: "3.7"
+
+services:
+
+  jenkins:
+    image: <>
+    volumes:
+      - /mnt/<>
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == qoffee
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=traefik"
+        - "traefik.http.routers.<>.rule=Host(`<>.office.qompa.com`)"
+        - "traefik.http.routers.<>.entrypoints=https"
+        - "traefik.http.routers.<>.tls=true"
+        - "traefik.http.routers.<>.tls.certresolver=le"
+        - "traefik.http.services.<>.loadbalancer.server.port=<>"
+      restart_policy:
+        condition: on-failure
+    networks:
+      - backend
+    environment:
+
+  maven:
+    image: <>
+    volumes:
+      - /mnt/<>
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == qoffee
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=traefik"
+        - "traefik.http.routers.<>.rule=Host(`<>.office.qompa.com`)"
+        - "traefik.http.routers.<>.entrypoints=https"
+        - "traefik.http.routers.<>.tls=true"
+        - "traefik.http.routers.<>.tls.certresolver=le"
+        - "traefik.http.services.<>.loadbalancer.server.port=<>"
+      restart_policy:
+        condition: on-failure
+    networks:
+      - backend
+    environment:
+
+  svn:
+    image: <>
+    volumes:
+      - /mnt/<>
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == qoffee
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=traefik"
+        - "traefik.http.routers.<>.rule=Host(`<>.office.qompa.com`)"
+        - "traefik.http.routers.<>.entrypoints=https"
+        - "traefik.http.routers.<>.tls=true"
+        - "traefik.http.routers.<>.tls.certresolver=le"
+        - "traefik.http.services.<>.loadbalancer.server.port=<>"
+      restart_policy:
+        condition: on-failure
+    networks:
+      - backend
+    environment:
+
+networks:
+
+  traefik:
+    external: true
+
+  backend:
