@@ -64,7 +64,7 @@ services:
       # docker socket for docker container autodiscovery
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       # persistent certificate store
-      - /mnt/ssd/docker/volumestraefik/certs:/certs
+      - /mnt/ssd/docker/volumes/traefik/certs:/certs
     networks:
       - traefik
     environment:
