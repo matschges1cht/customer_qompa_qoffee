@@ -3,9 +3,9 @@ version: "3.7"
 services:
 
   jenkins:
-    image: <>
+    image: jenkins/jenkins:lts
     volumes:
-      - /mnt/<>
+      - /mnt/ssd/docker/volumes/jenkins/data:/var/jenkins_home
     deploy:
       placement:
         constraints:
@@ -13,43 +13,38 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.docker.network=traefik"
-        - "traefik.http.routers.<>.rule=Host(`<>.office.qompa.com`)"
-        - "traefik.http.routers.<>.entrypoints=https"
-        - "traefik.http.routers.<>.tls=true"
-        - "traefik.http.routers.<>.tls.certresolver=le"
-        - "traefik.http.services.<>.loadbalancer.server.port=<>"
+        - "traefik.http.routers.jenkins.rule=Host(`jenkins.office.qompa.com`)"
+        - "traefik.http.routers.jenkins.entrypoints=https"
+        - "traefik.http.routers.jenkins.tls=true"
+        - "traefik.http.routers.jenkins.tls.certresolver=le"
+        - "traefik.http.routers.jenkins.tls.domains[0].main=office.qompa.com"
+        - "traefik.http.routers.jenkins.tls.domains[0].sans=*.office.qompa.com"
+        - "traefik.http.services.jenkins.loadbalancer.server.port=8080"
       restart_policy:
         condition: on-failure
     networks:
       - backend
-    environment:
 
   maven:
-    image: <>
+    image: maven:3-openjdk
     volumes:
-      - /mnt/<>
+      - /mnt/ssd/docker/volumes/maven/data:/root/.m2
     deploy:
       placement:
         constraints:
           - node.hostname == qoffee
-      labels:
-        - "traefik.enable=true"
-        - "traefik.docker.network=traefik"
-        - "traefik.http.routers.<>.rule=Host(`<>.office.qompa.com`)"
-        - "traefik.http.routers.<>.entrypoints=https"
-        - "traefik.http.routers.<>.tls=true"
-        - "traefik.http.routers.<>.tls.certresolver=le"
-        - "traefik.http.services.<>.loadbalancer.server.port=<>"
       restart_policy:
         condition: on-failure
     networks:
       - backend
-    environment:
 
   svn:
-    image: <>
+    image: rwd1/subversion
     volumes:
-      - /mnt/<>
+      - /mnt/ssd/docker/volumes/svn/config:/etc/apache2/conf.d/httpconfig
+      - /mnt/ssd/docker/volumes/svn/config:/etc/apache2/myhtpasswd
+    ports:
+      - 2222:22
     deploy:
       placement:
         constraints:
@@ -57,11 +52,13 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.docker.network=traefik"
-        - "traefik.http.routers.<>.rule=Host(`<>.office.qompa.com`)"
-        - "traefik.http.routers.<>.entrypoints=https"
-        - "traefik.http.routers.<>.tls=true"
-        - "traefik.http.routers.<>.tls.certresolver=le"
-        - "traefik.http.services.<>.loadbalancer.server.port=<>"
+        - "traefik.http.routers.svn.rule=Host(`svn.office.qompa.com`)"
+        - "traefik.http.routers.svn.entrypoints=https"
+        - "traefik.http.routers.svn.tls=true"
+        - "traefik.http.routers.svn.tls.certresolver=le"
+        - "traefik.http.routers.svn.tls.domains[0].main=office.qompa.com"
+        - "traefik.http.routers.svn.tls.domains[0].sans=*.office.qompa.com"
+        - "traefik.http.services.svn.loadbalancer.server.port=80"
       restart_policy:
         condition: on-failure
     networks:

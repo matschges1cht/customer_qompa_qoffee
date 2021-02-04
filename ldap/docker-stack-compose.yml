@@ -1,0 +1,36 @@
+version: "3.7"
+
+services:
+
+  app:
+    image: osixia/openldap
+    networks:
+      - backend
+    ports:
+      - 389:389
+      - 636:636
+    volumes:
+      - 
+    environment:
+      TZ: Europe/Berlin
+      LDAP_ORGANISATION: qompa
+      LDAP_DOMAIN: int.qompa.com
+      LDAP_ADMIN_PASSWORD: 5JuwHOiAMW87ts
+    deploy:
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=traefik"
+        - "traefik.http.routers.imageboard.rule=Host(`chan.int.wtlr.cloud`)"
+        - "traefik.http.routers.imageboard.entrypoints=https"
+        - "traefik.http.routers.imageboard.tls=true"
+        - "traefik.http.routers.imageboard.tls.certresolver=le"
+        - "traefik.http.routers.imageboard.tls.domains[0].main=int.wtlr.cloud"
+        - "traefik.http.routers.imageboard.tls.domains[0].sans=*.int.wtlr.cloud"
+
+networks:
+  backend:
+
+  traefik:
+    external: true
