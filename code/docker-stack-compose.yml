@@ -63,7 +63,6 @@ services:
         condition: on-failure
     networks:
       - backend
-    environment:
 
 networks:
 
