@@ -54,10 +54,10 @@ services:
     networks:
       - traefik
       - backend
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: "ldap"
+      PHPLDAPADMIN_HTTPS: "false"
     deploy:
-      environment:
-        PHPLDAPADMIN_LDAP_HOSTS: "ldap"
-        PHPLDAPADMIN_HTTPS: "false"
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.ldapadmin.rule=Host(`ldapadmin.office.qompa.com`)"
