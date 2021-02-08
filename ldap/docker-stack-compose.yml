@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
 
-  app:
+  ldap:
     image: osixia/openldap
     networks:
       - backend
@@ -10,24 +10,70 @@ services:
       - 389:389
       - 636:636
     volumes:
-      - 
+      - /mnt/ssd/docker/volumes/ldap/data:/var/lib/ldap
+      - /mnt/ssd/docker/volumes/ldap/config/slapd.d:/etc/ldap/slapd.d
     environment:
       TZ: Europe/Berlin
+
+      LDAP_LOG_LEVEL: "256"
+      LDAP_ORGANISATION: "qompa"
+      LDAP_DOMAIN: "office.qompa.com"
+      LDAP_BASE_DN: "dc=office,dc=qompa,dc=com"
+      LDAP_ADMIN_PASSWORD: "admin"
+      LDAP_CONFIG_PASSWORD: "config"
+      LDAP_READONLY_USER: "false"
+      #LDAP_READONLY_USER_USERNAME: "readonly"
+      #LDAP_READONLY_USER_PASSWORD: "readonly"
+      LDAP_RFC2307BIS_SCHEMA: "false"
+      LDAP_BACKEND: "mdb"
+      LDAP_TLS: "false"
+      LDAP_TLS_CRT_FILENAME: "ldap.crt"
+      LDAP_TLS_KEY_FILENAME: "ldap.key"
+      LDAP_TLS_DH_PARAM_FILENAME: "dhparam.pem"
+      LDAP_TLS_CA_CRT_FILENAME: "ca.crt"
+      LDAP_TLS_ENFORCE: "false"
+      LDAP_TLS_CIPHER_SUITE: "SECURE256:-VERS-SSL3.0"
+      LDAP_TLS_VERIFY_CLIENT: "demand"
+      LDAP_REPLICATION: "false"
+      #LDAP_REPLICATION_CONFIG_SYNCPROV: 'binddn="cn=admin,cn=config" bindmethod=simple credentials="$$LDAP_CONFIG_PASSWORD" searchbase="cn=config" type=refreshAndPersist retry="60 +" timeout=1 starttls=critical'
+      #LDAP_REPLICATION_DB_SYNCPROV: 'binddn="cn=admin,$$LDAP_BASE_DN" bindmethod=simple credentials="$$LDAP_ADMIN_PASSWORD" searchbase="$$LDAP_BASE_DN" type=refreshAndPersist interval=00:00:00:10 retry="60 +" timeout=1 starttls=critical'
+      #LDAP_REPLICATION_HOSTS: "#PYTHON2BASH:['ldap://ldap.example.org','ldap://ldap2.example.org']"
+      KEEP_EXISTING_CONFIG: "false"
+      LDAP_REMOVE_CONFIG_AFTER_SETUP: "true"
+      LDAP_SSL_HELPER_PREFIX: "ldap"
+
       LDAP_ORGANISATION: qompa
-      LDAP_DOMAIN: int.qompa.com
+      LDAP_DOMAIN: office.qompa.com
       LDAP_ADMIN_PASSWORD: 5JuwHOiAMW87ts
     deploy:
       restart_policy:
         condition: on-failure
+
+  phpldapadmin:
+    image: osixia/phpldapadmin:latest
+    networks:
+      - traefik
+      - backend
+    deploy:
+      environment:
+        PHPLDAPADMIN_LDAP_HOSTS: "ldap"
+        PHPLDAPADMIN_HTTPS: "false"
       labels:
         - "traefik.enable=true"
-        - "traefik.docker.network=traefik"
-        - "traefik.http.routers.imageboard.rule=Host(`chan.int.wtlr.cloud`)"
-        - "traefik.http.routers.imageboard.entrypoints=https"
-        - "traefik.http.routers.imageboard.tls=true"
-        - "traefik.http.routers.imageboard.tls.certresolver=le"
-        - "traefik.http.routers.imageboard.tls.domains[0].main=int.wtlr.cloud"
-        - "traefik.http.routers.imageboard.tls.domains[0].sans=*.int.wtlr.cloud"
+        - "traefik.http.routers.ldapadmin.rule=Host(`ldapadmin.office.qompa.com`)"
+        - "traefik.http.routers.ldapadmin.tls=true"
+        - "traefik.http.routers.ldapadmin.tls.certresolver=le"
+        - "traefik.http.routers.ldapadmin.tls.domains[0].main=office.qompa.com"
+        - "traefik.http.routers.ldapadmin.tls.domains[0].sans=*.office.qompa.com"
+        - "traefik.http.routers.ldapadmin.entrypoints=https"
+        - "traefik.http.services.ldapadmin.loadbalancer.server.port=80"
+      restart_policy:
+        condition: on-failure
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "30"
 
 networks:
   backend:
